@@ -5,24 +5,54 @@ class Participante:
         self.nombre = nombre
         self.institucion = institucion
 
-
     def mostrar_info(self):
         return f"{self.nombre} - {self.institucion}"
 
 class BandaEscolar(Participante):
-    categorias_validas = ["Primaria", "Básico", "Diversificado"]
-
-    def __init__(self, nombre, institucion, categoria, puntajes):
+    def __init__(self, nombre, institucion, categoria):
         super()._init_(nombre, institucion)
         self._categoria = ""
         self._puntajes = {}
         self.set_categoria(categoria)
 
     def set_categoria(self, categoria):
-        if categoria in BandaEscolar.categorias_validas:
+        if categoria in ["Primaria", "Básico", "Diversificado"]:
             self._categoria = categoria
         else:
-            raise ValueError("Categoría inválida")
+            self._categoria = "Inválida"
+
+    def registrar_puntajes(self, puntajes):
+        criterios = ["ritmo", "uniformidad", "coreografía", "alineación", "puntualidad"]
+        if all(crit in puntajes for crit in criterios):
+            if all(0 <= puntajes[crit] <= 10 for crit in criterios):
+                self._puntajes = puntajes
+
+    @property
+    def total(self):
+        if self._puntajes:
+            return sum(self._puntajes.values())
+        else:
+            return 0
+
+    def mostrar_info(self):
+        texto = self.nombre + " - " + self.institucion + " | " + self._categoria
+        if self._puntajes:
+            texto = texto + " | Total: " + str(self.total)
+        return texto
+
+class Concurso:
+    def _init_(self, nombre, fecha):
+        self.nombre = nombre
+        self.fecha = fecha
+        self.bandas = {}
+
+    def inscribir_banda(self, banda):
+        if banda.nombre not in self.bandas:
+            self.bandas[banda.nombre] = banda
+
+    def registrar_evaluacion(self, nombre_banda, puntajes):
+        if nombre_banda in self.bandas:
+            self.bandas[nombre_banda].registrar_puntajes(puntajes)
 
 
 def inscribir_banda():
