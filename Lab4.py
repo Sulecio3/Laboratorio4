@@ -6,7 +6,7 @@ class Participante:
         self.institucion = institucion
 
     def mostrar_info(self):
-        return f"{self.nombre} - {self.institucion}"
+        return self.nombre + " - " + self.institucion
 
 class BandaEscolar(Participante):
     def __init__(self, nombre, institucion, categoria):
@@ -31,13 +31,18 @@ class BandaEscolar(Participante):
     def total(self):
         if self._puntajes:
             return sum(self._puntajes.values())
-        else:
-            return 0
+        return 0
+
+    @property
+    def promedio(self):
+        if self._puntajes:
+            return self.total / len(self._puntajes)
+        return 0
 
     def mostrar_info(self):
         texto = self.nombre + " - " + self.institucion + " | " + self._categoria
         if self._puntajes:
-            texto = texto + " | Total: " + str(self.total)
+            texto += " | Total: " + str(self.total) + " | Promedio: " + str((self.promedio, 2))
         return texto
 
 class Concurso:
@@ -54,6 +59,7 @@ class Concurso:
         if nombre_banda in self.bandas:
             self.bandas[nombre_banda].registrar_puntajes(puntajes)
 
+concurso = Concurso("Concurso de Bandas", "2025-09-15")
 
 def inscribir_banda():
     print("Se abrió la ventana: Inscribir Banda")
