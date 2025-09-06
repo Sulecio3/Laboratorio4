@@ -18,8 +18,18 @@ class BandaEscolar(Participante):
         self.set_categoria(categoria)
 
     def set_categoria(self, categoria):
-        if categoria in ["Primaria", "Básico", "Diversificado"]:
-            self._categoria = categoria
+        # Normalizar: minúsculas y quitar acentos manualmente
+        categoria = categoria.strip().lower()
+        categoria = categoria.replace("á", "a").replace("é", "e").replace("í", "i").replace("ó", "o").replace("ú", "u")
+
+        categorias_validas = {
+            "primaria": "Primaria",
+            "basico": "Básico",
+            "diversificado": "Diversificado"
+        }
+
+        if categoria in categorias_validas:
+            self._categoria = categorias_validas[categoria]
         else:
             self._categoria = "Inválida"
 
@@ -55,8 +65,12 @@ class Concurso:
         self.bandas = {}
 
     def inscribir_banda(self, banda):
-        if banda.nombre not in self.bandas:
-            self.bandas[banda.nombre] = banda
+        if banda._categoria == "Inválida":
+            return "Categoría inválida"
+        if banda.nombre in self.bandas:
+            return "Ya existe una banda con ese nombre"
+        self.bandas[banda.nombre] = banda
+        return "Banda inscrita con éxito"
 
     def registrar_evaluacion(self, nombre_banda, puntajes):
         if nombre_banda in self.bandas:
@@ -66,29 +80,10 @@ class Concurso:
 concurso = Concurso("Concurso de Bandas", "2025-09-15")
 
 
-def guardar_banda():
-    nombre = entry_nombre.get()
-    institucion = entry_institucion.get()
-    categoria = entry_categoria.get()
-
-    if nombre and institucion and categoria:
-        banda = BandaEscolar(nombre, institucion, categoria)
-        concurso.inscribir_banda(banda)
-        if banda._categoria == "Inválida":
-            mensaje.config(text="Categoría inválida", fg="red")
-        else:
-            mensaje.config(text="Banda inscrita con éxito", fg="green")
-    else:
-        mensaje.config(text="Complete todos los campos", fg="red")
-
-
 def inscribir_banda():
-    print("Se abrió la ventana: Inscribir Banda")
     ventana_inscribir = tk.Toplevel(ventana)
     ventana_inscribir.title("Inscribir Banda")
     ventana_inscribir.geometry("400x300")
-
-    global entry_nombre, entry_institucion, entry_categoria, mensaje  # Variables globales para acceder desde guardar_banda
 
     tk.Label(ventana_inscribir, text="Nombre de la Banda:").pack()
     entry_nombre = tk.Entry(ventana_inscribir)
@@ -105,33 +100,65 @@ def inscribir_banda():
     mensaje = tk.Label(ventana_inscribir, text="")
     mensaje.pack()
 
+    def guardar_banda():
+        nombre = entry_nombre.get().strip()
+        institucion = entry_institucion.get().strip()
+        categoria = entry_categoria.get().strip()
+
+        if nombre and institucion and categoria:
+            banda = BandaEscolar(nombre, institucion, categoria)
+            resultado = concurso.inscribir_banda(banda)
+            if "éxito" in resultado:
+                mensaje.config(text=resultado, fg="green")
+            else:
+                mensaje.config(text=resultado, fg="red")
+        else:
+            mensaje.config(text="Complete todos los campos", fg="red")
+
     tk.Button(ventana_inscribir, text="Guardar", command=guardar_banda).pack(pady=10)
 
 
 def registrar_evaluacion():
-    print("Se abrió la ventana: Registrar Evaluación")
     ventana_eval = tk.Toplevel(ventana)
     ventana_eval.title("Registrar Evaluación")
-    ventana_eval.geometry("400x300")
+    ventana_eval.geometry("400x400")
 
+    tk.Label(ventana_eval, text="Nombre de la Banda:").pack()
+    entry_nombre = tk.Entry(ventana_eval)
+    entry_nombre.pack()
 
-def listar_bandas():
-    print("Se abrió la ventana: Listado de Bandas")
-    ventana_listado = tk.Toplevel(ventana)
-    ventana_listado.title("Listado de Bandas")
-    ventana_listado.geometry("400x300")
+    criterios = ["ritmo", "uniformidad", "coreografía", "alineación", "puntualidad"]
+    entradas = {}
+    for crit in criterios:
+        tk.Label(ventana_eval, text=crit + ":").pack()
+        entrada = tk.Entry(ventana_eval)
+        entrada.pack()
+        entradas[crit] = entrada
 
+    mensaje = tk.Label(ventana_eval, text="")
+    mensaje.pack()
 
-def ver_ranking():
-    print("Se abrió la ventana: Ranking Final")
-    ventana_ranking = tk.Toplevel(ventana)
-    ventana_ranking.title("Ranking Final")
-    ventana_ranking.geometry("400x300")
+    def guardar_evaluacion():
+        nombre = entry_nombre.get().strip()
+        puntajes = {}
+        try:
+            for crit in criterios:
+                valor = int(entradas[crit].get())
+                if 0 <= valor <= 10:
+                    puntajes[crit] = valor
+                else:
+                    raise ValueError
+        except ValueError:
+            mensaje.config(text="Todos los puntajes deben ser números entre 0 y 10", fg="red")
+            return
 
+        if nombre in concurso.bandas:
+            concurso.registrar_evaluacion(nombre, puntajes)
+            mensaje.config(text="Evaluación guardada con éxito", fg="green")
+        else:
+            mensaje.config(text="Banda no encontrada", fg="red")
 
-def salir():
-    print("Aplicación cerrada")
-    ventana.quit()
+    tk.Button(ventana_eval, text="Guardar Evaluación", command=guardar_evaluacion).pack(pady=10)
 
 
 ventana = tk.Tk()
@@ -139,15 +166,11 @@ ventana.title("Concurso de Bandas - Quetzaltenango")
 ventana.geometry("500x300")
 
 barra_menu = tk.Menu(ventana)
-
 menu_opciones = tk.Menu(barra_menu, tearoff=0)
 menu_opciones.add_command(label="Inscribir Banda", command=inscribir_banda)
 menu_opciones.add_command(label="Registrar Evaluación", command=registrar_evaluacion)
-menu_opciones.add_command(label="Listar Bandas", command=listar_bandas)
-menu_opciones.add_command(label="Ver Ranking", command=ver_ranking)
 menu_opciones.add_separator()
-menu_opciones.add_command(label="Salir", command=salir)
-
+menu_opciones.add_command(label="Salir", command=ventana.quit)
 barra_menu.add_cascade(label="Opciones", menu=menu_opciones)
 
 ventana.config(menu=barra_menu)
