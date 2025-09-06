@@ -18,7 +18,6 @@ class BandaEscolar(Participante):
         self.set_categoria(categoria)
 
     def set_categoria(self, categoria):
-        # Normalizar: minúsculas y quitar acentos manualmente
         categoria = categoria.strip().lower()
         categoria = categoria.replace("á", "a").replace("é", "e").replace("í", "i").replace("ó", "o").replace("ú", "u")
 
