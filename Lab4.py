@@ -1,6 +1,4 @@
 import tkinter as tk
-
-
 class Participante:
     def __init__(self, nombre, institucion):
         self.nombre = nombre
@@ -74,6 +72,16 @@ class Concurso:
     def registrar_evaluacion(self, nombre_banda, puntajes):
         if nombre_banda in self.bandas:
             self.bandas[nombre_banda].registrar_puntajes(puntajes)
+
+    def listar_bandas(self):
+        print("\n Listado de bandas")
+        for clave, valor in self.bandas.items():
+            print(clave, valor)
+
+    def ranking(self):
+        ranking_ordenado = sorted(self.bandas.items(),key=lambda item: item[1].total, reverse=True)
+        for i, (nombre_banda, puntaje) in enumerate(ranking_ordenado):
+            print(f"- {i} Banda: {nombre_banda}, puntaje: {puntaje} ")
 
 
 concurso = Concurso("Concurso de Bandas", "2025-09-15")
@@ -159,6 +167,42 @@ def registrar_evaluacion():
 
     tk.Button(ventana_eval, text="Guardar Evaluación", command=guardar_evaluacion).pack(pady=10)
 
+def listar_bandas():
+    ventana_listar = tk.Toplevel(ventana)
+    ventana_listar.title("Listado de Bandas")
+    ventana_listar.geometry("400x400")
+
+    mensaje = tk.Label(ventana_listar, text="")
+    mensaje.pack(pady=10)
+
+    texto = ""
+    if concurso.bandas:
+        for banda in concurso.bandas.values():
+            texto += banda.mostrar_info() + "\n"
+        mensaje.config(text=texto)
+    else:
+        mensaje.config(text="No hay bandas inscritas")
+
+def ranking():
+    ventana_ranking = tk.Toplevel(ventana)
+    ventana_ranking.title("Ranking de bandas")
+    ventana_ranking.geometry("400x400")
+
+    mensaje = tk.Label(ventana_ranking, text="")
+    mensaje.pack(pady=50)
+
+    if not concurso.bandas:
+        mensaje.config(text="No existen bandas inscritas")
+        return
+
+    ranking_ordenado = sorted(concurso.bandas.items(), key=lambda item: item[1].total, reverse=True)
+    texto = ""
+    for i, (nombre_banda, banda) in enumerate(ranking_ordenado, start=1):
+        texto += f"- {i}, Banda: {nombre_banda}, Puntaje: {banda.total}\n"
+
+    mensaje.config(text=texto)
+
+
 
 ventana = tk.Tk()
 ventana.title("Concurso de Bandas - Quetzaltenango")
@@ -168,9 +212,12 @@ barra_menu = tk.Menu(ventana)
 menu_opciones = tk.Menu(barra_menu, tearoff=0)
 menu_opciones.add_command(label="Inscribir Banda", command=inscribir_banda)
 menu_opciones.add_command(label="Registrar Evaluación", command=registrar_evaluacion)
+menu_opciones.add_command(label="Listado de bandas", command=listar_bandas)
+menu_opciones.add_command(label="Mostrar ranking", command=ranking)
 menu_opciones.add_separator()
 menu_opciones.add_command(label="Salir", command=ventana.quit)
 barra_menu.add_cascade(label="Opciones", menu=menu_opciones)
+
 
 ventana.config(menu=barra_menu)
 
